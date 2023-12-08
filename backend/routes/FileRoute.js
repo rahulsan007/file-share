@@ -36,6 +36,20 @@ router.post(
           .status(400)
           .json({ error: "Please provide a filename and file to upload" });
       }
+
+      // Check if the user has available uploads
+      const getMaxUpload = await prisma.user.findUnique({
+        where: {
+          id: user.id,
+        },
+      });
+
+      if (getMaxUpload.maxUpload <= 0) {
+        return res
+          .status(400)
+          .json({ error: "No available uploads. Upgrade your membership." });
+      }
+
       const shortURL = generateShortId();
 
       const filePath = req.file.path;
@@ -48,6 +62,15 @@ router.post(
           shortURL,
           password: password || null,
           userId: user.id,
+        },
+      });
+
+      await prisma.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          maxUpload: getMaxUpload.maxUpload - 1,
         },
       });
 
