@@ -11,6 +11,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/api", require("./routes/UserRoute.js"));
+app.use("/api", require("./routes/FileRoute.js"));
 
 async function serverStart() {
   try {

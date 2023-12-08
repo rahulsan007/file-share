@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const prisma = require("../prisma");
 const jwt = require("jsonwebtoken");
+const shortid = require("short-unique-id");
 
 const cookieOptions = {
   maxAge: 3600000, // 1 hour in milliseconds
@@ -24,9 +25,15 @@ const generateToken = (payload) => {
   return token;
 };
 
+const generateShortId = () => {
+  const uid = new shortid({ length: 6 });
+  return uid.rnd();
+};
+
 module.exports = {
   enccryptPassword,
   comparePassword,
   generateToken,
+  generateShortId,
   cookieOptions,
 };
