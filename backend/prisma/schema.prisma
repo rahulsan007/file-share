@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model File {
+  id         String     @id @default(uuid())
+  filename   String
+  path       String
+  visibility Visibility @default(PRIVATE)
+  shortURL   String     @unique
+  password   String?
+  userId     String
+  User       User       @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id        String  @id @default(uuid())
+  username  String  @unique
+  password  String
+  email     String  @unique
+  member    Boolean @default(false)
+  maxUpload Int     @default(4)
+  File      File[]
+}
+
+enum Visibility {
+  PUBLIC
+  PASSWORD_PROTECTED
+  PRIVATE
+}
