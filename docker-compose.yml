@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+  db:
+    image: postgres
+    container_name: backend_db
+    restart: always
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: rahul
+      POSTGRES_PASSWORD: rahul
+    volumes:
+      - local_backend_pgdata:/var/lib/postgresql/data
+
+
+
+  backend:
+    build:
+      context: ./backend
+    container_name: backend_container
+    restart: always
+    working_dir: /usr/app
+    ports:
+      - "4000:4000"
+    environment:
+      - DATABASE_URL=postgresql://rahul:rahul@backend_db:5432/file-share?schema=public
+      - PORT=4000
+      - JWT_SECRET=SUPERMAN
+      - SALT=10
+    depends_on:
+      - db
+    command: sh -c " npx prisma migrate dev --name create-initial-database && npx prisma generate && npm start"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend_container
+    restart: always
+    working_dir: /usr/app
+    ports:
+      - "8000:8000"
+    environment:
+      - VITE_BACKEND_URL=http://localhost:4000
+    depends_on:
+      - backend
+    command: npm run dev
+
+volumes:
+  local_backend_pgdata:

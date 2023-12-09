@@ -1,7 +1,7 @@
 import { File, Upload } from "lucide-react";
 //Texts
 
-export const baseUrl = "http://localhost:4000";
+export const baseUrl = import.meta.env.VITE_BACKEND_URL;
 
 export const TEXTS = {
   desc: "Drag and drop your file directly on our cloud and share it with your friends secuarely with password and send it",
