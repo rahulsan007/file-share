@@ -2,10 +2,89 @@ import PropTypes from "prop-types";
 
 import download from "../../assets/download.gif";
 import { ArrowDownToLine } from "lucide-react";
+import { useEffect, useState } from "react";
+import { baseUrl } from "../../utils/Constant";
 
-function FileItem({ file }) {
+function FileItem({ file, visibility }) {
   FileItem.propTypes = {
-    file: PropTypes.isRequired,
+    file: PropTypes.string.isRequired,
+    visibility: PropTypes.string.isRequired, // Adjust the prop type accordingly
+    // Adjust the prop type accordingly
+  };
+  const [loading, setLoading] = useState(true);
+  const [passwordFeild, setPasswordFeild] = useState(false);
+  const [fileData, setFileData] = useState();
+  const [availableID, setAvailableID] = useState();
+  const [formData, setFormData] = useState({
+    password: "",
+  });
+  const [correctPassword, setCorrectPassword] = useState(false);
+  useEffect(() => {
+    if (visibility === "password_protected") {
+      setPasswordFeild(true);
+    }
+    if (visibility === "public") {
+      const fetchData = async () => {
+        try {
+          const response = await fetch(`${baseUrl}/api/file/public/${file}`, {
+            method: "GET",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+
+          // Parse the response JSON
+          const data = await response.json();
+          setFileData(data);
+
+          // Update the state with the fetched data
+
+          console.log(data);
+
+          setLoading(false);
+        } catch (error) {
+          console.error("Error fetching data:", error.message);
+          setLoading(false);
+        }
+      };
+      fetchData();
+      setLoading(false);
+    }
+  }, [visibility, file]);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const handleSubmitPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${baseUrl}/api/file/access-password-protected/${file}`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      setAvailableID(data.id);
+      setCorrectPassword(true);
+    } catch (error) {
+      console.error("Error fetching data:", error.message);
+    }
   };
 
   return (
@@ -26,37 +105,68 @@ function FileItem({ file }) {
       </div>
       <div>
         <h1 className="text-3xl font-bold">
-          <strong className="text-primary font-bold">Rahul Santra</strong>{" "}
-          shared file with you
+          <strong className="text-primary font-bold">Someone</strong> shared
+          file with you
         </h1>
       </div>
       <p className="text-gray-400">File file detail below</p>
       <img src={download} alt="" height={200} width={200} />
       <p className="text-2xl font-semibold text-gray-600">⚡File Name ⚡</p>
-      <div className="mt-4">
-        <label
-          htmlFor="Password"
-          className="block text-base font-medium text-gray-700"
-        >
-          {" "}
-          Password{" "}
-        </label>
+      {passwordFeild ? (
+        <div className="mt-4">
+          <form onSubmit={handleSubmitPassword}>
+            <label
+              htmlFor="Password"
+              className="block text-base font-medium text-gray-700"
+            >
+              {" "}
+              Password{" "}
+            </label>
 
-        <input
-          type="password"
-          id="Password"
-          name="password"
-          placeholder="Enter password"
-          className="mt-1 w-full rounded-md border-gray-200  p-4 shadow-sm sm:text-sm"
-        />
-        <button
-          type="sumit"
-          className="flex gap-3 bg-primary py-2 px-4 rounded-md w-full text-white mt-2"
-        >
-          <ArrowDownToLine />
-          Download
-        </button>
-      </div>
+            <input
+              type="password"
+              id="Password"
+              name="password"
+              placeholder="Enter password"
+              onChange={handleChange}
+              value={formData.password}
+              className="mt-1 w-full rounded-md border-gray-200  p-4 shadow-sm sm:text-sm"
+            />
+            <button
+              type="sumit"
+              className="flex justify-center gap-3 bg-primary py-2 px-4 rounded-md w-full text-white mt-2"
+            >
+              Check Password
+            </button>
+            {correctPassword ? (
+              <button
+                className="flex gap-3 bg-primary py-2 px-4 rounded-md w-full text-white mt-2"
+                onClick={() => {
+                  window.open(
+                    `${baseUrl}/api/file/pass/download/${availableID}`,
+                    "_blank"
+                  );
+                }}
+              >
+                <ArrowDownToLine />
+                Download
+              </button>
+            ) : null}
+          </form>
+        </div>
+      ) : (
+        <div className="mt-4">
+          <button
+            className="flex gap-3 bg-primary py-2 px-4 rounded-md w-full text-white mt-2"
+            onClick={() => {
+              window.open(`${baseUrl}/api/file/download/${file}`, "_blank");
+            }}
+          >
+            <ArrowDownToLine />
+            Download
+          </button>
+        </div>
+      )}
     </div>
   );
 }

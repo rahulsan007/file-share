@@ -24,7 +24,7 @@ model User {
   password  String
   email     String  @unique
   member    Boolean @default(false)
-  maxUpload Int     @default(4)
+  maxUpload Int     @default(99)
   File      File[]
 }
 

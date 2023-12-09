@@ -99,6 +99,24 @@ router.get("/file/all", authenticate, async (req, res) => {
   }
 });
 
+router.get("/file/:shortID", authenticate, async (req, res) => {
+  try {
+    const user = req.user;
+
+    // Retrieve all files associated with the logged-in user
+    const userFiles = await prisma.file.findUnique({
+      where: {
+        shortURL: req.params.shortID,
+      },
+    });
+
+    res.status(200).json(userFiles);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 // Check file visibility by shortURL
 router.get("/file/check-visibility/:shortURL", async (req, res) => {
   try {

@@ -52,11 +52,15 @@ router.post("/user/sign-up", async (req, res) => {
   // const tokenPayload = { userId: user.id, userEmail: user.email };
   const token = generateToken(user);
 
-  return res.cookie("token", token).status(200).json(user);
+  return res
+    .cookie("token", token, cookieOptions)
+    .status(200)
+    .json({ user, token });
 });
 
 //Sign In
 router.post("/user/sign-in", async (req, res) => {
+  console.log("Received login request");
   const { email, password, username } = req.body;
   var emailofUser;
   var usernameofUser;
@@ -95,7 +99,7 @@ router.post("/user/sign-in", async (req, res) => {
   // const tokenPayload = { userId: user.id, userEmail: user.email };
   const token = generateToken(user);
 
-  return res.cookie("token", token, cookieOptions).status(200).json(user);
+  return res.status(200).json({ user, token });
 });
 
 //Sign Out

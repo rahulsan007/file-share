@@ -4,8 +4,8 @@ const jwt = require("jsonwebtoken");
 const shortid = require("short-unique-id");
 
 const cookieOptions = {
-  maxAge: 3600000, // 1 hour in milliseconds
-  httpOnly: true, // The cookie is only accessible via HTTP(S) and not JavaScript
+  path: "/", // 1 hour in milliseconds
+  httpOnly: false, // The cookie is only accessible via HTTP(S) and not JavaScript
 };
 
 const enccryptPassword = async (password) => {

@@ -1,5 +1,7 @@
-import { File, Shield, Upload } from "lucide-react";
+import { File, Upload } from "lucide-react";
 //Texts
+
+export const baseUrl = "http://localhost:4000";
 
 export const TEXTS = {
   desc: "Drag and drop your file directly on our cloud and share it with your friends secuarely with password and send it",
@@ -18,12 +20,6 @@ export const SideBarIcon = [
     name: "Upload",
     icon: Upload,
     path: "/dashboard/upload",
-  },
-  {
-    id: 3,
-    name: "Upgrade",
-    icon: Shield,
-    path: "/dashboard/upgrade",
   },
 ];
 

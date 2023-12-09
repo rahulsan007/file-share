@@ -1,15 +1,51 @@
 import { ArrowLeftCircle, Paperclip } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { baseUrl } from "../utils/Constant";
 // import { useLocation } from "react-router-dom";
 
 function FilePreviewPage() {
   // const location = useLocation();
-  const [activeButton, setActiveButton] = useState("private");
+  const navigate = useNavigate();
+  const [activeButton, setActiveButton] = useState("PRIVATE");
+  const [fileData, setFileData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const { id } = useParams();
 
   const [isCopied, setIsCopied] = useState(false);
+  const [formData, setFormData] = useState({
+    password: "",
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`${baseUrl}/api/file/${id}`, {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        // Parse the response JSON
+        const data = await response.json();
+
+        // Update the state with the fetched data
+        setFileData(data);
+        console.log(data);
+        setActiveButton(data.visibility);
+      } catch (error) {
+        console.error("Error fetching data:", error.message);
+      }
+    };
+    fetchData();
+  }, [id]);
 
   const copyToClipboard = async () => {
     try {
@@ -20,12 +56,96 @@ function FilePreviewPage() {
     }
   };
 
-  const handleButtonClick = (buttonType) => {
+  const handleButtonClick = async (buttonType) => {
+    setIsLoading(true);
     setActiveButton(buttonType);
-    // Additional logic you may want to perform on button click
+    try {
+      const response = await fetch(
+        `${baseUrl}/api/file/update-visibility/${id}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ visibility: buttonType }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      // Parse the response JSON
+      const data = await response.json();
+
+      // Update the state with the fetched data
+      setActiveButton(data.visibility);
+    } catch (error) {
+      console.error("Error fetching data:", error.message);
+    } finally {
+      setIsLoading(false);
+      setActiveButton(buttonType);
+      // Set loading state to false after request completes
+    }
+  };
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const handleSubmitPassword = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `${baseUrl}/api/file/update-visibility/${id}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      // Parse the response JSON
+      // const data = await response.json();
+    } catch (error) {
+      console.error("Error fetching data:", error.message);
+    } finally {
+      setIsLoading(false);
+      setActiveButton("PASSWORD_PROTECTED");
+      // Set loading state to false after request completes
+      window.location.reload();
+    }
   };
 
   const completeUrl = `${window.location.origin}/f/${id}`;
+
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/api/file/delete/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      alert("File Deleted");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Error fetching data:", error.message);
+    }
+  };
   return (
     <>
       <div className="p-10">
@@ -43,9 +163,17 @@ function FilePreviewPage() {
               <div className="p-5 flex gap-4 items-center bg-blue-100 m-3 rounded-lg  border-2 border-dotted border-blue-500  ">
                 <Paperclip />
                 <div className="flex flex-col">
-                  <p className="text-lg font-semibold">Profile picture</p>
-                  <p className="text-xs text-gray-500">Image/2 MB</p>
+                  <p className="text-lg font-semibold">{fileData.filename}</p>
+                  <p className="text-xs text-gray-500">{fileData.visibility}</p>
                 </div>
+              </div>
+              <div>
+                <button
+                  onClick={handleDelete}
+                  className="py-2 px-4 bg-red-500 text-white font-semibold rounded-full"
+                >
+                  Delete File
+                </button>
               </div>
             </section>
 
@@ -64,107 +192,136 @@ function FilePreviewPage() {
                     type="text"
                     id="shortURL"
                     value={completeUrl}
+                    name="shortURL"
+                    readOnly
                     className="mt-1 w-full border-none p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm"
                   />
                 </label>
               </div>
-              <div className="w-full">
-                <div className="flex justify-between rounded-lg border border-gray-100 bg-gray-100 p-1">
-                  <button
-                    className={`inline-block rounded-md px-4 py-2 text-sm ${
-                      activeButton === "private"
-                        ? "text-blue-500 bg-white shadow-sm"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                    onClick={() => handleButtonClick("private")}
-                  >
-                    Private
-                  </button>
-
-                  <button
-                    className={`inline-block rounded-md px-4 py-2 text-sm ${
-                      activeButton === "public"
-                        ? "text-blue-500 bg-white shadow-sm"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                    onClick={() => handleButtonClick("public")}
-                  >
-                    Public
-                  </button>
-
-                  <button
-                    className={`inline-block rounded-md px-4 py-2 text-sm ${
-                      activeButton === "password"
-                        ? "text-blue-500 bg-white shadow-sm"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                    onClick={() => handleButtonClick("password")}
-                  >
-                    Password
-                  </button>
-                </div>
-              </div>
-              <div>
-                {activeButton === "private" && (
-                  <div className="mt-5">
-                    <p className="text-gray-500 text-sm">
-                      Only people with the link can access this file
-                    </p>
-                  </div>
-                )}
-                {activeButton === "public" && (
-                  <div className="mt-5">
-                    <p className="text-gray-500 text-sm">
-                      Anyone on the internet can access this file
-                    </p>
-                    <button
-                      className="mt-2 w-full px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/75 focus:outline-none focus:ring focus:border-blue-300"
-                      onClick={copyToClipboard}
-                    >
-                      {isCopied ? "Link Copied" : "Copy Link"}
-                    </button>
-                  </div>
-                )}
-                {activeButton === "password" && (
-                  <div className="mt-5">
-                    <p className="text-gray-500 text-sm">
-                      Only people with the password can access this file
-                    </p>
-                    {/* //password */}
-
-                    <div className="mt-4">
-                      <label
-                        htmlFor="Password"
-                        className="block text-base font-medium text-gray-700"
-                      >
-                        {" "}
-                        Password{" "}
-                      </label>
-
-                      <input
-                        type="password"
-                        id="Password"
-                        name="password"
-                        placeholder="Enter password"
-                        className="mt-1 w-full rounded-md border-gray-200  p-4 shadow-sm sm:text-sm"
-                      />
+              {!isLoading && (
+                <>
+                  <div className="w-full">
+                    <div className="flex justify-between rounded-lg border border-gray-100 bg-gray-100 p-1">
                       <button
-                        type="sumit"
-                        className="bg-primary py-2 px-4 rounded-md w-full text-white mt-2"
+                        className={`inline-block rounded-md px-4 py-2 text-sm ${
+                          activeButton === "PRIVATE"
+                            ? "text-blue-500 bg-white shadow-sm"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                        onClick={() => handleButtonClick("PRIVATE")}
                       >
-                        Save
+                        Private
                       </button>
 
                       <button
-                        className="mt-2 w-full px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/75 focus:outline-none focus:ring focus:border-blue-300"
-                        onClick={copyToClipboard}
+                        className={`inline-block rounded-md px-4 py-2 text-sm ${
+                          activeButton === "PUBLIC"
+                            ? "text-blue-500 bg-white shadow-sm"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                        onClick={() => handleButtonClick("PUBLIC")}
                       >
-                        {isCopied ? "Link Copied" : "Copy Link"}
+                        Public
+                      </button>
+
+                      <button
+                        className={`inline-block rounded-md px-4 py-2 text-sm ${
+                          activeButton === "PASSWORD_PROTECTED"
+                            ? "text-blue-500 bg-white shadow-sm"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                        onClick={() => handleButtonClick("PASSWORD_PROTECTED")}
+                      >
+                        Password
                       </button>
                     </div>
                   </div>
-                )}
-              </div>
+                  <div>
+                    {activeButton === "PRIVATE" && (
+                      <div className="mt-5">
+                        <p className="text-gray-500 text-sm">
+                          Only people with the link can access this file
+                        </p>
+                      </div>
+                    )}
+                    {activeButton === "PUBLIC" && (
+                      <div className="mt-5">
+                        <p className="text-gray-500 text-sm">
+                          Anyone on the internet can access this file
+                        </p>
+                        <button
+                          className="mt-2 w-full px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/75 focus:outline-none focus:ring focus:border-blue-300"
+                          onClick={copyToClipboard}
+                        >
+                          {isCopied ? "Link Copied" : "Copy Link"}
+                        </button>
+                      </div>
+                    )}
+                    {activeButton === "PASSWORD_PROTECTED" && (
+                      <div className="mt-5">
+                        <p className="text-gray-500 text-sm">
+                          Only people with the password can access this file
+                        </p>
+                        {/* //password */}
+
+                        <div className="mt-4">
+                          <form onSubmit={handleSubmitPassword}>
+                            {fileData.password &&
+                            fileData.visibility === "PASSWORD_PROTECTED" ? (
+                              <div className="flex items-center gap-4 p-4 border shadow-sm rounded-md mb-1">
+                                <p className="block text-base font-medium text-gray-700">
+                                  Current Password
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {fileData.password}
+                                </p>
+                              </div>
+                            ) : (
+                              <p>Loading...</p>
+                            )}
+                            <label
+                              htmlFor="Password"
+                              className="block text-base font-medium text-gray-700"
+                            >
+                              {" "}
+                              Password{" "}
+                            </label>
+
+                            <input
+                              type="password"
+                              id="Password"
+                              name="password"
+                              onChange={handleChange}
+                              value={formData.password}
+                              placeholder="Enter password"
+                              className="mt-1 w-full rounded-md border-gray-200  p-4 shadow-sm sm:text-sm"
+                            />
+                            <button
+                              type="sumit"
+                              className="bg-primary py-2 px-4 rounded-md w-full text-white mt-2"
+                            >
+                              Save
+                            </button>
+
+                            <button
+                              className="mt-2 w-full px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/75 focus:outline-none focus:ring focus:border-blue-300"
+                              onClick={copyToClipboard}
+                            >
+                              {isCopied ? "Link Copied" : "Copy Link"}
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {isLoading && (
+                <div className="mt-5">
+                  <p>Loading...</p>
+                </div>
+              )}
             </section>
           </section>
         </section>

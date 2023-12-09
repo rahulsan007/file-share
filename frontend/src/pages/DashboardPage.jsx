@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useNavigate } from "react-router-dom";
 
 import Files from "../components/DashboardComponent/Files";
 import Sidebar from "../components/DashboardComponent/Sidebar";
@@ -6,14 +6,31 @@ import Upload from "../components/DashboardComponent/Upload";
 import Upgrade from "../components/DashboardComponent/Upgrade";
 import TopSidebar from "../components/DashboardComponent/TopSidebar";
 import MobileNavigation from "../components/DashboardComponent/MobileNavigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Account from "../components/DashboardComponent/Account";
 import FilePreviewPage from "./FilePreviewPage";
 import Please from "../components/DashboardComponent/Please";
 
+// import axios from "axios";
+
+import Cookies from "js-cookie";
+// import { baseUrl } from "../utils/Constant";
+
 function DashboardPage() {
   const [mobileNavVisible, setMobileNavVisible] = useState(false);
   const [accountNavVisible, setAccountNavVisible] = useState(false);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check for the presence of a token in the cookie
+    const token = Cookies.get("token");
+
+    // If token is not present, redirect to sign-in page
+    if (!token) {
+      navigate("/sign-in");
+    }
+  }, [navigate]);
 
   const toggleMobileNav = () => {
     setMobileNavVisible(!mobileNavVisible);
@@ -22,6 +39,7 @@ function DashboardPage() {
   const toggleAccountNav = () => {
     setAccountNavVisible(!accountNavVisible);
   };
+
   return (
     <div>
       <div className="hidden md:block h-full md:w-64 flex-col fixed inset-y-0 z-50">

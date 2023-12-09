@@ -1,6 +1,45 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+// import axios from "axios";
+import { baseUrl } from "../utils/Constant";
+import { useState } from "react";
+import Cookies from "js-cookie";
 
 function LoginPage() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log(formData);
+
+    try {
+      const response = await fetch(`${baseUrl}/api/user/sign-in`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem("token", data.token);
+        Cookies.set("token", data.token);
+        navigate("/dashboard");
+      } else {
+        console.error(`HTTP error! Status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+    }
+  };
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
   return (
     <>
       <section className="bg-white">
@@ -70,7 +109,10 @@ function LoginPage() {
                 </p>
               </div>
 
-              <form action="#" className="mt-8 grid grid-cols-6 gap-6">
+              <form
+                onSubmit={handleSubmit}
+                className="mt-8 grid grid-cols-6 gap-6"
+              >
                 <span className=" font-bold text-2xl">Sign In</span>
                 <div className="col-span-6">
                   <label
@@ -85,6 +127,8 @@ function LoginPage() {
                     type="email"
                     id="Email"
                     name="email"
+                    onChange={handleChange}
+                    value={formData.email}
                     className="mt-1 w-full rounded-md border-gray-200 bg-white text-sm text-gray-700 shadow-sm"
                   />
                 </div>
@@ -102,12 +146,17 @@ function LoginPage() {
                     type="password"
                     id="Password"
                     name="password"
+                    onChange={handleChange}
+                    value={formData.password}
                     className="mt-1 w-full rounded-md border-gray-200 bg-white text-sm text-gray-700 shadow-sm"
                   />
                 </div>
 
                 <div className="col-span-6 sm:flex sm:items-center sm:gap-4">
-                  <button className="inline-block shrink-0 rounded-md border border-primary/80 bg-primary px-12 py-3 text-sm font-medium text-white transition hover:bg-transparent hover:text-primary focus:outline-none focus:ring active:text-primary">
+                  <button
+                    type="submit"
+                    className="inline-block shrink-0 rounded-md border border-primary/80 bg-primary px-12 py-3 text-sm font-medium text-white transition hover:bg-transparent hover:text-primary focus:outline-none focus:ring active:text-primary"
+                  >
                     Login
                   </button>
 
